@@ -13,13 +13,13 @@
       padding: 20px;
     }
     h1 {
-      color: #ff0000; /* Bright Red */
+      color: #ff0000;
     }
     p {
-      color: #0000ff; /* Blue */
+      color: #0000ff;
     }
     button {
-      background-color: #0000ff; /* Blue */
+      background-color: #0000ff;
       color: #fff;
       border: none;
       padding: 10px 20px;
@@ -49,74 +49,109 @@
 </head>
 <body>
   <h1>UGC Generator</h1>
-  <p>Enter a keyword or URL to pull expert content from Quora.</p>
+  <p>Enter a keyword or URL to fetch content from Quora.</p>
   
-  <!-- Input field for user query (keywords or URL) -->
-  <input type="text" id="query" placeholder="Enter keyword or URL" />
+  <input type="text" id="query" placeholder="Enter keyword or URL">
   
-  <!-- Search button -->
-  <button onclick="fetchTweets()">Search</button>
+  <button onclick="fetchQuestions()">Search Questions</button>
+  <button onclick="fetchProfiles()">Search Profiles</button>
+  <button onclick="fetchAnswers()">Get Answers</button>
+  <button onclick="fetchComments()">Get Comments</button>
   
-  <!-- Output area where the generated content will appear -->
   <div id="output"></div>
 
   <script>
-    async function fetchTweets() {
-      const query = document.getElementById('query').value;
-      const outputDiv = document.getElementById('output');
-      outputDiv.innerHTML = 'Loading...';
+    const baseUrl = 'http://localhost:3000/api';
 
-      // Check if the query input is empty
-      if (!query) {
-        outputDiv.innerHTML = '<p style="color: red;">Please enter a keyword or URL.</p>';
-        return;
-      }
+    const updateOutput = (message) => {
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = message;
+    };
+
+    const fetchFromEndpoint = async (endpoint, params = {}) => {
+      const url = new URL(`${baseUrl}${endpoint}`);
+      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
       try {
-  // Fetch the response from your local backend server
-  const response = await fetch('https://ugc-generator.onrender.com/api/quotes', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `query=${encodeURIComponent(query)}`,
-  });
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error(error);
+        updateOutput(`<p style="color: red;">${error.message}</p>`);
+      }
+    };
 
-  // Parse the response data as JSON
-  const data = await response.json();
-  console.log(data);
+    const fetchQuestions = async () => {
+      const query = document.getElementById('query').value;
+      if (!query) {
+        updateOutput('<p style="color: red;">Please enter a keyword or URL.</p>');
+        return;
+      }
+      updateOutput('Loading...');
+      const data = await fetchFromEndpoint('/search/questions', { query });
+      if (data) {
+        const results = data.data.map(q => `
+          <p><strong>Question:</strong> ${q.title}</p>
+          <p><a href="${q.url}" target="_blank">View Question</a></p>
+        `).join('');
+        updateOutput(results || '<p>No questions found.</p>');
+      }
+    };
 
-  // Check if there is an error in the response
-  if (data.error) {
-    outputDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
-  } else if (data.quotes && data.quotes.length > 0) {
-    // Generate formatted HTML for each quote
-    const quotesHTML = data.quotes
-      .map(
-        (quote) => `
-        <div style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-          <p><strong>Author:</strong> ${quote.author}</p>
-          <p><strong>Text:</strong> ${quote.text}</p>
-          <p><strong>Credentials:</strong> ${quote.credentials}</p>
-          <p><strong>Views:</strong> ${quote.views}</p>
-          <a href="${quote.url}" target="_blank">Read More</a>
-        </div>
-      `
-      )
-      .join(''); // Combine all the generated HTML
+    const fetchProfiles = async () => {
+      const query = document.getElementById('query').value;
+      if (!query) {
+        updateOutput('<p style="color: red;">Please enter a keyword or URL.</p>');
+        return;
+      }
+      updateOutput('Loading...');
+      const data = await fetchFromEndpoint('/search/profiles', { query });
+      if (data) {
+        const results = data.data.map(p => `
+          <p><strong>Profile:</strong> ${p.name}</p>
+          <p><a href="${p.url}" target="_blank">View Profile</a></p>
+        `).join('');
+        updateOutput(results || '<p>No profiles found.</p>');
+      }
+    };
 
-    // Display the quotes
-    outputDiv.innerHTML = `<h2>Results:</h2>${quotesHTML}`;
-  } else {
-    outputDiv.innerHTML = '<p>No quotes found for the given query.</p>';
-  }
-} catch (error) {
-  console.error('Error:', error);
-  outputDiv.innerHTML =
-    '<p style="color: red;">An error occurred while fetching data.</p>';
-}
+    const fetchAnswers = async () => {
+      const query = document.getElementById('query').value;
+      if (!query) {
+        updateOutput('<p style="color: red;">Please enter a URL.</p>');
+        return;
+      }
+      updateOutput('Loading...');
+      const data = await fetchFromEndpoint('/question/answers', { url: query });
+      if (data) {
+        const results = data.data.map(a => `
+          <p><strong>Answer:</strong> ${a.content}</p>
+          <p><a href="${a.url}" target="_blank">View Answer</a></p>
+        `).join('');
+        updateOutput(results || '<p>No answers found.</p>');
+      }
+    };
 
-    }
+    const fetchComments = async () => {
+      const query = document.getElementById('query').value;
+      if (!query) {
+        updateOutput('<p style="color: red;">Please enter a URL.</p>');
+        return;
+      }
+      updateOutput('Loading...');
+      const data = await fetchFromEndpoint('/question/comments', { url: query });
+      if (data) {
+        const results = data.data.map(c => `
+          <p><strong>Comment:</strong> ${c.content}</p>
+        `).join('');
+        updateOutput(results || '<p>No comments found.</p>');
+      }
+    };
+ 
   </script>
 </body>
 </html>
