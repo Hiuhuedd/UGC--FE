@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UGC Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #ff0000; /* Bright Red */
+    }
+    button {
+      background-color: #0000ff; /* Blue */
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #333;
+    }
+    #output {
+      margin-top: 20px;
+      background: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      max-width: 800px;
+      margin: 20px auto;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>UGC Generator</h1>
+  <p>Enter a keyword or URL to pull expert content from X (formerly Twitter).</p>
+  <input type="text" id="query" placeholder="Enter keyword or URL" style="padding: 10px; width: 70%;">
+  <button onclick="fetchTweets()">Search</button>
+  <div id="output"></div>
+
+  <script>
+    async function fetchTweets() {
+      const query = document.getElementById('query').value;
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = 'Loading...';
+
+      if (!query) {
+        outputDiv.innerHTML = '<p style="color: red;">Please enter a keyword or URL.</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch('YOUR_DEPLOYED_WEB_APP_URL', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `query=${encodeURIComponent(query)}`,
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          outputDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
+        } else {
+          outputDiv.innerHTML = `<h2>Results:</h2><p>${data.content}</p>`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        outputDiv.innerHTML = '<p style="color: red;">An error occurred while fetching data.</p>';
+      }
+    }
+  </script>
+</body>
+</html>

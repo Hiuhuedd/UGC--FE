@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UGC Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #ff0000; /* Bright Red */
+    }
+    p {
+      color: #0000ff; /* Blue */
+    }
+    button {
+      background-color: #0000ff; /* Blue */
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #333;
+    }
+    #output {
+      margin-top: 20px;
+      background: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      max-width: 800px;
+      margin: 20px auto;
+      text-align: left;
+      white-space: pre-line;
+    }
+    #query {
+      padding: 10px;
+      width: 70%;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>UGC Generator</h1>
+  <p>Enter a keyword or URL to pull expert content from Quora.</p>
+  
+  <!-- Input field for user query (keywords or URL) -->
+  <input type="text" id="query" placeholder="Enter keyword or URL" />
+  
+  <!-- Search button -->
+  <button onclick="fetchTweets()">Search</button>
+  
+  <!-- Output area where the generated content will appear -->
+  <div id="output"></div>
+
+  <script>
+    async function fetchTweets() {
+      const query = document.getElementById('query').value;
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = 'Loading...';
+
+      // Check if the query input is empty
+      if (!query) {
+        outputDiv.innerHTML = '<p style="color: red;">Please enter a keyword or URL.</p>';
+        return;
+      }
+
+      try {
+  // Fetch the response from your local backend server
+  const response = await fetch('https://ugc-generator.onrender.com/api/quotes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `query=${encodeURIComponent(query)}`,
+  });
+
+  // Parse the response data as JSON
+  const data = await response.json();
+  console.log(data);
+
+  // Check if there is an error in the response
+  if (data.error) {
+    outputDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
+  } else if (data.quotes && data.quotes.length > 0) {
+    // Generate formatted HTML for each quote
+    const quotesHTML = data.quotes
+      .map(
+        (quote) => `
+        <div style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+          <p><strong>Author:</strong> ${quote.author}</p>
+          <p><strong>Text:</strong> ${quote.text}</p>
+          <p><strong>Credentials:</strong> ${quote.credentials}</p>
+          <p><strong>Views:</strong> ${quote.views}</p>
+          <a href="${quote.url}" target="_blank">Read More</a>
+        </div>
+      `
+      )
+      .join(''); // Combine all the generated HTML
+
+    // Display the quotes
+    outputDiv.innerHTML = `<h2>Results:</h2>${quotesHTML}`;
+  } else {
+    outputDiv.innerHTML = '<p>No quotes found for the given query.</p>';
+  }
+} catch (error) {
+  console.error('Error:', error);
+  outputDiv.innerHTML =
+    '<p style="color: red;">An error occurred while fetching data.</p>';
+}
+
+    }
+  </script>
+</body>
+</html>
